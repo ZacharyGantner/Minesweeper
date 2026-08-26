@@ -46,7 +46,7 @@ float getBoardSizeX(vector<vector<Tile>>& Board);
 float getBoardSizeY(vector<vector<Tile>>& Board);
 
 int main(){
-    vector<vector<Tile>> GameBoard = SetGameBoard(10, 9, 9);
+    vector<vector<Tile>> GameBoard = SetGameBoard(40, 16, 16);
     Texture tileTexture("assets/Sprites.png");
     //PrintBoard(GameBoard);
 
@@ -60,16 +60,28 @@ int main(){
         while(const std::optional event = window.pollEvent()){
            if(event->is<sf::Event::Closed>()) window.close();
            
-           // Reveals the tile that is clicked on
            if(const auto* pressed = event->getIf<Event::MouseButtonPressed>()){
+                // Gets the coordinates of the mouse click            
+                Vector2f worldPos = window.mapPixelToCoords(pressed->position);
+
+                int col = static_cast<int>(worldPos.x / TILE_SIZE);
+                int row = static_cast<int>(worldPos.y / TILE_SIZE);
+
+                // Reveals tiles with left click
                 if(pressed->button == Mouse::Button::Left){
-                    Vector2f worldPos = window.mapPixelToCoords(pressed->position);
-
-                    int col = static_cast<int>(worldPos.x / TILE_SIZE);
-                    int row = static_cast<int>(worldPos.y / TILE_SIZE);
-
                     if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
                         Reveal(GameBoard, Position(row, col));
+                    }
+                }
+
+                // Flags tiles with right click
+                if(pressed->button == Mouse::Button::Right){
+                    if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
+                        if(!GameBoard[row][col].isFlagged){
+                            GameBoard[row][col].isFlagged = true;
+                        } else{
+                            GameBoard[row][col].isFlagged = false;
+                        }
                     }
                 }
             }
