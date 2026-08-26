@@ -40,13 +40,14 @@ vector<vector<Tile>> SetGameBoard(int numMines, int rows, int cols);
 void PrintBoard(const vector<vector<Tile>>& Board);
 void Reveal(vector<vector<Tile>>& Board, Position startPos);
 
-void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board);
+void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture);
 
 float getBoardSizeX(vector<vector<Tile>>& Board);
 float getBoardSizeY(vector<vector<Tile>>& Board);
 
 int main(){
     vector<vector<Tile>> GameBoard = SetGameBoard(10, 9, 9);
+    Texture tileTexture("assets/Sprites.png");
     //PrintBoard(GameBoard);
 
     RenderWindow window(VideoMode({1200,1000}), "Minesweeper", Style::Default);
@@ -98,7 +99,7 @@ int main(){
         window.setView(view);
         
         window.clear(Color(180,180,180));
-        DrawBoard(window, GameBoard);
+        DrawBoard(window, GameBoard, tileTexture);
         window.display();
     }
    
@@ -200,21 +201,27 @@ void PrintBoard(const vector<vector<Tile>>& Board){
     }
 }
 
-void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board){
+void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture){
     for(int row = 0; row < Board.size(); ++row){
         for(int col = 0; col < Board[row].size(); ++col){
-            RectangleShape tile({TILE_SIZE, TILE_SIZE});
+            // Determine which sprite to draw
+            int spriteIndex;
+            if(Board[row][col].isFlagged){
+                spriteIndex = 1;
+            } else if(Board[row][col].hidden){
+                spriteIndex = 0;
+            } else if(Board[row][col].isMine){
+                spriteIndex = 2;
+            } else{
+                spriteIndex = 3 + Board[row][col].adjacentMines;
+            }
 
-            float boardWidth = Board[0].size() * TILE_SIZE;
-            float boardHeight = Board.size() * TILE_SIZE;
+            Sprite sprite(tileTexture);
 
-            auto windowSize = window.getSize();
+            sprite.setTextureRect(IntRect({static_cast<int>(spriteIndex * TILE_SIZE), 0}, {static_cast<int>(TILE_SIZE), static_cast<int>(TILE_SIZE)}));
+            sprite.setPosition({col*TILE_SIZE , row*TILE_SIZE});
 
-            tile.setPosition({col*TILE_SIZE , row*TILE_SIZE});
-            tile.setOutlineThickness(1.f);
-            tile.setOutlineColor(Color::Black);
-
-            window.draw(tile);
+            window.draw(sprite);
         }
     }
 }
