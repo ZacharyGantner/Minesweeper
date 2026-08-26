@@ -1,7 +1,7 @@
 NOTE THIS IS STILL A WORK IN PROGRESS AND THESE INSTRUCTIONS MIGHT NOT WORK IF THIS MESSAGE IS HERE
 
 To simply play the game:
-1. Download the zip
+1. Download the zip from the release
 2. Extract the files
 3. double click the .exe
 
