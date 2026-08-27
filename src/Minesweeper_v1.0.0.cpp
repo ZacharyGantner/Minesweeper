@@ -59,7 +59,20 @@ int main(){
     RectangleShape hud;
     hud.setSize({static_cast<float>(window.getSize().x), 50.f});
     hud.setPosition({0.f, 0.f});
-    hud.setFillColor(sf::Color(120, 100, 80));
+    hud.setFillColor(Color(120, 100, 80));
+
+    // Creates the text for the difficulty selection
+    Text difficultyText(font);
+    difficultyText.setString("Expert");
+    difficultyText.setPosition({500.f, 5.f});
+
+    // Creates the text for the timer
+    Text timerText(font);
+    timerText.setPosition({0.f, 5.f});
+
+    // Creates the text for the mine counter
+    Text minesText(font);
+    minesText.setPosition({900.f, 5.f});
 
     // Creates the camera and centers it on the board
     View view({getBoardSizeX(GameBoard)/2.f, getBoardSizeY(GameBoard)/2.f}, {750.f, 750.f});
@@ -72,10 +85,9 @@ int main(){
     const float MAX_VIEW_WIDTH = 3000.f;
     
     bool firstClick = true;
+
     Clock gameClock;
     gameClock.reset();
-    Text timerText(font);
-    Text minesText(font);
     while(window.isOpen()){
         // Set the view for handling game events
         window.setView(view);
@@ -136,8 +148,12 @@ int main(){
         
         // Set the view for handling UI elements
         window.setView(window.getDefaultView());
+
+        // Draw hud elements
         window.draw(hud);
         window.draw(timerText);
+        window.draw(difficultyText);
+        window.draw(minesText);
 
         window.display();
     }
