@@ -54,7 +54,14 @@ int main(){
     
     RenderWindow window(VideoMode({1200,1000}), "Minesweeper", Style::Default);
     window.setFramerateLimit(60);
-    
+
+    // Creates the hud rectangle
+    RectangleShape hud;
+    hud.setSize({static_cast<float>(window.getSize().x), 50.f});
+    hud.setPosition({0.f, 0.f});
+    hud.setFillColor(sf::Color(120, 100, 80));
+
+    // Creates the camera and centers it on the board
     View view({getBoardSizeX(GameBoard)/2.f, getBoardSizeY(GameBoard)/2.f}, {750.f, 750.f});
     window.setView(view);
     
@@ -65,8 +72,10 @@ int main(){
     const float MAX_VIEW_WIDTH = 3000.f;
     
     bool firstClick = true;
-    std::optional<Clock> gameClock;
+    Clock gameClock;
+    gameClock.reset();
     Text timerText(font);
+    Text minesText(font);
     while(window.isOpen()){
         // Set the view for handling game events
         window.setView(view);
@@ -74,7 +83,7 @@ int main(){
         while(const std::optional event = window.pollEvent()){
             if(event->is<sf::Event::Closed>()) window.close();
             
-           if(const auto* pressed = event->getIf<Event::MouseButtonPressed>()){
+            if(const auto* pressed = event->getIf<Event::MouseButtonPressed>()){
                 // Gets the coordinates of the mouse click            
                 Vector2f worldPos = window.mapPixelToCoords(pressed->position);
 
@@ -86,7 +95,7 @@ int main(){
                     if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
                         Reveal(GameBoard, Position(row, col));
                         if(firstClick){
-                            gameClock.emplace();
+                            gameClock.restart();
                             firstClick = false;
                         }
                     }
@@ -118,14 +127,16 @@ int main(){
             if (view.getSize().x < MAX_VIEW_WIDTH) view.zoom(ZOOM_OUT);
         }
 
-        int seconds = static_cast<int>(gameClock->getElapsedTime().asSeconds());
+        int seconds = static_cast<int>(gameClock.getElapsedTime().asSeconds());
         timerText.setString("Time: " + std::to_string(seconds));
+        minesText.setString("Mines: ");
         
         window.clear(Color(181,148,103));
         DrawBoard(window, GameBoard, tileTexture);
         
         // Set the view for handling UI elements
         window.setView(window.getDefaultView());
+        window.draw(hud);
         window.draw(timerText);
 
         window.display();
