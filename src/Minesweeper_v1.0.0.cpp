@@ -16,6 +16,7 @@ Beginner = 9x9 (10 mines)
 Intermediate = 16x16 (40 mines)
 Expert = 30x16 (99 mines)
 */
+
 const float TILE_SIZE = 32.f;
 
 struct Tile{
@@ -46,20 +47,30 @@ float getBoardSizeX(vector<vector<Tile>>& Board);
 float getBoardSizeY(vector<vector<Tile>>& Board);
 
 int main(){
-    vector<vector<Tile>> GameBoard = SetGameBoard(40, 16, 16);
     Texture tileTexture("assets/Sprites.png");
-    //PrintBoard(GameBoard);
+    Font font("assets/RubikDistressed-Regular.ttf");
 
+    vector<vector<Tile>> GameBoard = SetGameBoard(40, 16, 16);
+    
     RenderWindow window(VideoMode({1200,1000}), "Minesweeper", Style::Default);
     window.setFramerateLimit(60);
     
     View view({getBoardSizeX(GameBoard)/2.f, getBoardSizeY(GameBoard)/2.f}, {750.f, 750.f});
     window.setView(view);
-
+    
+    const float MOVESPEED = 5.f;
+    const float ZOOM_IN = 0.98f;
+    const float ZOOM_OUT = 1.02f;
+    const float MIN_VIEW_WIDTH = 400.f;
+    const float MAX_VIEW_WIDTH = 3000.f;
+    
+    bool firstClick = true;
+    std::optional<Clock> gameClock;
+    Text timerText(font);
     while(window.isOpen()){
         while(const std::optional event = window.pollEvent()){
-           if(event->is<sf::Event::Closed>()) window.close();
-           
+            if(event->is<sf::Event::Closed>()) window.close();
+            
            if(const auto* pressed = event->getIf<Event::MouseButtonPressed>()){
                 // Gets the coordinates of the mouse click            
                 Vector2f worldPos = window.mapPixelToCoords(pressed->position);
@@ -71,6 +82,10 @@ int main(){
                 if(pressed->button == Mouse::Button::Left){
                     if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
                         Reveal(GameBoard, Position(row, col));
+                        if(firstClick){
+                            gameClock.emplace();
+                            firstClick = false;
+                        }
                     }
                 }
 
@@ -86,15 +101,7 @@ int main(){
                 }
             }
         }
-
-    
         // Controls the camera
-        const float MOVESPEED = 5.f;
-        const float ZOOM_IN = 0.98f;
-        const float ZOOM_OUT = 1.02f;
-        const float MIN_VIEW_WIDTH = 400.f;
-        const float MAX_VIEW_WIDTH = 3000.f;
-
         if(Keyboard::isKeyPressed(Keyboard::Key::W)) view.move({0.f,-MOVESPEED});
         if(Keyboard::isKeyPressed(Keyboard::Key::A)) view.move({-MOVESPEED,0.f});
         if(Keyboard::isKeyPressed(Keyboard::Key::S)) view.move({0.f,MOVESPEED});
@@ -110,11 +117,15 @@ int main(){
 
         window.setView(view);
         
-        window.clear(Color(180,180,180));
+        window.clear(Color(181,148,103));
         DrawBoard(window, GameBoard, tileTexture);
+        
+        int seconds = static_cast<int>(gameClock->getElapsedTime().asSeconds());
+        timerText.setString("Time: " + std::to_string(seconds));
+
+        window.draw(timerText);
         window.display();
     }
-   
     return 0;
 }
 
