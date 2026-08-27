@@ -68,6 +68,9 @@ int main(){
     std::optional<Clock> gameClock;
     Text timerText(font);
     while(window.isOpen()){
+        // Set the view for handling game events
+        window.setView(view);
+
         while(const std::optional event = window.pollEvent()){
             if(event->is<sf::Event::Closed>()) window.close();
             
@@ -115,15 +118,16 @@ int main(){
             if (view.getSize().x < MAX_VIEW_WIDTH) view.zoom(ZOOM_OUT);
         }
 
-        window.setView(view);
+        int seconds = static_cast<int>(gameClock->getElapsedTime().asSeconds());
+        timerText.setString("Time: " + std::to_string(seconds));
         
         window.clear(Color(181,148,103));
         DrawBoard(window, GameBoard, tileTexture);
         
-        int seconds = static_cast<int>(gameClock->getElapsedTime().asSeconds());
-        timerText.setString("Time: " + std::to_string(seconds));
-
+        // Set the view for handling UI elements
+        window.setView(window.getDefaultView());
         window.draw(timerText);
+
         window.display();
     }
     return 0;
