@@ -125,6 +125,12 @@ int main(){
     gameOverText.setFillColor(Color::Red);
     gameOverText.setPosition({300.f, 30.f});
 
+    Text victoryText(font);
+    victoryText.setString("VICTORY");
+    victoryText.setCharacterSize(100);
+    victoryText.setFillColor(Color::Cyan);
+    victoryText.setPosition({300.f, 30.f});
+
     // Creates the main menu button on the game over screen
     RectangleShape backToMenuButton({300.f, 60.f});
     backToMenuButton.setPosition({450.f, 160.f});
@@ -146,6 +152,7 @@ int main(){
     int minesRemaining = 0;
     int remainingSafeTiles = 0;
     bool firstClick = true;
+    bool mineHit = false;
 
     Clock gameClock;
     gameClock.reset();
@@ -203,6 +210,7 @@ int main(){
                                 firstClick = false;
                             }
                             if(GameBoard[row][col].isMine){
+                                mineHit = true;
                                 state = GameState::GameOver;
                                 RevealBoard(GameBoard);
                             }
@@ -305,7 +313,10 @@ int main(){
             DrawBoard(window, GameBoard, tileTexture);
             
             window.setView(window.getDefaultView());
-            window.draw(gameOverText);
+            
+            if(mineHit) window.draw(gameOverText);
+            else window.draw(victoryText);
+
             window.draw(backToMenuButton);
             window.draw(backToMenuText);
         }
