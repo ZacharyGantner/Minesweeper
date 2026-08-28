@@ -47,7 +47,7 @@ enum class GameState
 vector<vector<Tile>> SetGameBoard(int numMines, int rows, int cols);
 
 void PrintBoard(const vector<vector<Tile>>& Board);
-void Reveal(vector<vector<Tile>>& Board, Position startPos);
+void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTiles);
 
 void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture);
 void SetButtonParameters(RectangleShape& button);
@@ -144,13 +144,14 @@ int main(){
     const float MAX_VIEW_WIDTH = 3000.f;
     
     int minesRemaining = 0;
+    int remainingSafeTiles = 0;
     bool firstClick = true;
 
     Clock gameClock;
     gameClock.reset();
     while(window.isOpen()){
         while(const std::optional event = window.pollEvent()){
-            if(event->is<sf::Event::Closed>()) window.close();
+            if(event->is<Event::Closed>()) window.close();
             
             if(const auto* pressed = event->getIf<Event::MouseButtonPressed>()){
                 if(state == GameState::MainMenu){
@@ -162,18 +163,21 @@ int main(){
                             StartGame(GameBoard, view, 10, 9, 9);
                             state = GameState::Playing;
                             minesRemaining = 10;
+                            remainingSafeTiles = 9 * 9 - 10;
                             firstClick = true;
                         }
                         else if (intermediateButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 40, 16, 16);
                             state = GameState::Playing;
                             minesRemaining = 40;
+                            remainingSafeTiles = 16 * 16 - 40;
                             firstClick = true;
                         }
                         else if (expertButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 99, 16, 30);
                             state = GameState::Playing;
                             minesRemaining = 99;
+                            remainingSafeTiles = 16 * 30 - 99;
                             firstClick = true;
                         }
                         else if (customButton.getGlobalBounds().contains(mousePos)){
@@ -193,7 +197,7 @@ int main(){
                     // Reveals tiles with left click
                     if(pressed->button == Mouse::Button::Left){
                         if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
-                            Reveal(GameBoard, Position(row, col));
+                            Reveal(GameBoard, Position(row, col), remainingSafeTiles);
                             if(firstClick){
                                 gameClock.restart();
                                 firstClick = false;
@@ -202,7 +206,6 @@ int main(){
                                 state = GameState::GameOver;
                                 RevealBoard(GameBoard);
                             }
-
                         }
                     }
     
@@ -283,6 +286,8 @@ int main(){
             window.draw(hud);
             window.draw(timerText);
             window.draw(minesText);
+
+            if(remainingSafeTiles == 0) state = GameState::GameOver;
         }
 
         if(state == GameState::GameOver){
@@ -354,7 +359,7 @@ float getBoardSizeY(vector<vector<Tile>>& Board){
     return Board.size() * TILE_SIZE;
 }
 
-void Reveal(vector<vector<Tile>>& Board, Position startPos){
+void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTiles){
     if(Board[startPos.row][startPos.col].isMine) return;
     if(!Board[startPos.row][startPos.col].hidden) return;
     if(Board[startPos.row][startPos.col].isFlagged) return;
@@ -363,6 +368,7 @@ void Reveal(vector<vector<Tile>>& Board, Position startPos){
     const int cols = Board[0].size();
 
     Board[startPos.row][startPos.col].hidden = false;
+    remainingSafeTiles--;
 
     std::queue<Position> revealQueue;
     revealQueue.push(startPos);
@@ -377,11 +383,13 @@ void Reveal(vector<vector<Tile>>& Board, Position startPos){
             for(int j = -1; j <=1; ++j){
                 if (i == 0 && j == 0) continue;
                 Position neighborPos(current.row+i, current.col+j);
-                if(neighborPos.row < 0 || neighborPos.col < 0 || neighborPos.row >= rows || neighborPos.col >= cols) continue;                    if(Board[neighborPos.row][neighborPos.col].isFlagged || 
+                if(neighborPos.row < 0 || neighborPos.col < 0 || neighborPos.row >= rows || neighborPos.col >= cols) continue;
+                if(Board[neighborPos.row][neighborPos.col].isFlagged || 
                     Board[neighborPos.row][neighborPos.col].isMine || 
                     !Board[neighborPos.row][neighborPos.col].hidden) continue;
 
                 Board[neighborPos.row][neighborPos.col].hidden = false;
+                remainingSafeTiles--;
 
                 if(Board[neighborPos.row][neighborPos.col].adjacentMines == 0){
                     revealQueue.push(neighborPos);
