@@ -209,7 +209,7 @@ int main(){
                                 gameClock.restart();
                                 firstClick = false;
                             }
-                            if(GameBoard[row][col].isMine){
+                            if(GameBoard[row][col].isMine && !GameBoard[row][col].isFlagged){
                                 mineHit = true;
                                 state = GameState::GameOver;
                                 RevealBoard(GameBoard);
@@ -313,7 +313,7 @@ int main(){
             DrawBoard(window, GameBoard, tileTexture);
             
             window.setView(window.getDefaultView());
-            
+
             if(mineHit) window.draw(gameOverText);
             else window.draw(victoryText);
 
