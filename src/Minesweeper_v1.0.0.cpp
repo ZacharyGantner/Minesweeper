@@ -36,12 +36,22 @@ struct Position{
     }
 };
 
+enum class GameState
+{
+    MainMenu,
+    CustomSetup,
+    Playing,
+    GameOver
+};
+
 vector<vector<Tile>> SetGameBoard(int numMines, int rows, int cols);
 
 void PrintBoard(const vector<vector<Tile>>& Board);
 void Reveal(vector<vector<Tile>>& Board, Position startPos);
 
 void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture);
+void SetButtonParameters(RectangleShape& button);
+void StartGame(vector<vector<Tile>>& GameBoard, View& view, int mines, int rows, int cols);
 
 float getBoardSizeX(vector<vector<Tile>>& Board);
 float getBoardSizeY(vector<vector<Tile>>& Board);
@@ -50,10 +60,48 @@ int main(){
     Texture tileTexture("assets/Sprites.png");
     Font font("assets/RubikDistressed-Regular.ttf");
 
-    vector<vector<Tile>> GameBoard = SetGameBoard(40, 16, 16);
+    GameState state = GameState::MainMenu;
+    vector<vector<Tile>> GameBoard;
     
     RenderWindow window(VideoMode({1200,1000}), "Minesweeper", Style::Default);
     window.setFramerateLimit(60);
+
+    // Main Menu shapes
+    RectangleShape beginnerButton({300.f, 60.f});
+    RectangleShape intermediateButton({300.f, 60.f});
+    RectangleShape expertButton({300.f, 60.f});
+    RectangleShape customButton({300.f, 60.f});
+
+    beginnerButton.setPosition({450.f, 250.f});
+    intermediateButton.setPosition({450.f, 330.f});
+    expertButton.setPosition({450.f, 410.f});
+    customButton.setPosition({450.f, 490.f});
+
+    SetButtonParameters(beginnerButton);
+    SetButtonParameters(intermediateButton);
+    SetButtonParameters(expertButton);
+    SetButtonParameters(customButton);
+
+    Text title(font);
+    title.setString("MINESWEEPER");
+    title.setCharacterSize(50);
+    title.setFillColor(Color::White);
+    title.setPosition({460.f, 130.f});
+
+    Text beginnerText(font);
+    Text intermediateText(font);
+    Text expertText(font);
+    Text customText(font);
+
+    beginnerText.setPosition({530.f, 263.f});
+    intermediateText.setPosition({515.f, 343.f});
+    expertText.setPosition({550.f, 423.f});
+    customText.setPosition({550.f, 503.f});
+
+    beginnerText.setString("Beginner");
+    intermediateText.setString("Intermediate");
+    expertText.setString("Expert");
+    customText.setString("Custom");
 
     // Creates the hud rectangle
     RectangleShape hud;
@@ -63,7 +111,7 @@ int main(){
 
     // Creates the text for the difficulty selection
     Text difficultyText(font);
-    difficultyText.setString("Expert");
+    difficultyText.setString("Difficulty ");
     difficultyText.setPosition({500.f, 5.f});
 
     // Creates the text for the timer
@@ -75,7 +123,7 @@ int main(){
     minesText.setPosition({900.f, 5.f});
 
     // Creates the camera and centers it on the board
-    View view({getBoardSizeX(GameBoard)/2.f, getBoardSizeY(GameBoard)/2.f}, {750.f, 750.f});
+    View view({0.f, 0.f}, {750.f, 750.f});
     window.setView(view);
     
     const float MOVESPEED = 5.f;
@@ -85,76 +133,122 @@ int main(){
     const float MAX_VIEW_WIDTH = 3000.f;
     
     bool firstClick = true;
-
+    
     Clock gameClock;
     gameClock.reset();
     while(window.isOpen()){
-        // Set the view for handling game events
-        window.setView(view);
-
         while(const std::optional event = window.pollEvent()){
             if(event->is<sf::Event::Closed>()) window.close();
             
             if(const auto* pressed = event->getIf<Event::MouseButtonPressed>()){
-                // Gets the coordinates of the mouse click            
-                Vector2f worldPos = window.mapPixelToCoords(pressed->position);
+                if(state == GameState::MainMenu){
+                    window.setView(window.getDefaultView());
+                    if (pressed->button == sf::Mouse::Button::Left){
+                        Vector2f mousePos = window.mapPixelToCoords(pressed->position);
 
-                int col = static_cast<int>(worldPos.x / TILE_SIZE);
-                int row = static_cast<int>(worldPos.y / TILE_SIZE);
-
-                // Reveals tiles with left click
-                if(pressed->button == Mouse::Button::Left){
-                    if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
-                        Reveal(GameBoard, Position(row, col));
-                        if(firstClick){
-                            gameClock.restart();
-                            firstClick = false;
+                        if (beginnerButton.getGlobalBounds().contains(mousePos)){
+                            StartGame(GameBoard, view, 10, 9, 9);
+                            state = GameState::Playing;
+                        }
+                        else if (intermediateButton.getGlobalBounds().contains(mousePos)){
+                            StartGame(GameBoard, view, 40, 16, 16);
+                            state = GameState::Playing;
+                        }
+                        else if (expertButton.getGlobalBounds().contains(mousePos)){
+                            StartGame(GameBoard, view, 99, 16, 30);
+                            state = GameState::Playing;
+                        }
+                        else if (customButton.getGlobalBounds().contains(mousePos)){
+                            state = GameState::CustomSetup;
                         }
                     }
                 }
+                else if(state == GameState::Playing){
+                    window.setView(view);
 
-                // Flags tiles with right click
-                if(pressed->button == Mouse::Button::Right){
-                    if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
-                        if(!GameBoard[row][col].isFlagged){
-                            GameBoard[row][col].isFlagged = true;
-                        } else{
-                            GameBoard[row][col].isFlagged = false;
+                    // Gets the coordinates of the mouse click            
+                    Vector2f worldPos = window.mapPixelToCoords(pressed->position);
+
+                    int col = static_cast<int>(worldPos.x / TILE_SIZE);
+                    int row = static_cast<int>(worldPos.y / TILE_SIZE);
+    
+                    // Reveals tiles with left click
+                    if(pressed->button == Mouse::Button::Left){
+                        if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
+                            Reveal(GameBoard, Position(row, col));
+                            if(firstClick){
+                                gameClock.restart();
+                                firstClick = false;
+                            }
+                        }
+                    }
+    
+                    // Flags tiles with right click
+                    if(pressed->button == Mouse::Button::Right){
+                        if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
+                            if(!GameBoard[row][col].isFlagged && GameBoard[row][col].hidden){
+                                GameBoard[row][col].isFlagged = true;
+                            } else{
+                                GameBoard[row][col].isFlagged = false;
+                            }
                         }
                     }
                 }
             }
         }
-        // Controls the camera
-        if(Keyboard::isKeyPressed(Keyboard::Key::W)) view.move({0.f,-MOVESPEED});
-        if(Keyboard::isKeyPressed(Keyboard::Key::A)) view.move({-MOVESPEED,0.f});
-        if(Keyboard::isKeyPressed(Keyboard::Key::S)) view.move({0.f,MOVESPEED});
-        if(Keyboard::isKeyPressed(Keyboard::Key::D)) view.move({MOVESPEED,0.f});
-        
-        if(Keyboard::isKeyPressed(Keyboard::Key::Up)){
-            if (view.getSize().x > MIN_VIEW_WIDTH) view.zoom(ZOOM_IN);
-        }
 
-        if(Keyboard::isKeyPressed(Keyboard::Key::Down)){
-            if (view.getSize().x < MAX_VIEW_WIDTH) view.zoom(ZOOM_OUT);
-        }
-
-        int seconds = static_cast<int>(gameClock.getElapsedTime().asSeconds());
-        timerText.setString("Time: " + std::to_string(seconds));
-        minesText.setString("Mines: ");
-        
+        // Clear the window before drawing anything in the loop
         window.clear(Color(181,148,103));
-        DrawBoard(window, GameBoard, tileTexture);
-        
-        // Set the view for handling UI elements
-        window.setView(window.getDefaultView());
 
-        // Draw hud elements
-        window.draw(hud);
-        window.draw(timerText);
-        window.draw(difficultyText);
-        window.draw(minesText);
+        if (state == GameState::MainMenu){
+            window.setView(window.getDefaultView());
 
+            window.draw(title);
+
+            window.draw(beginnerButton);
+            window.draw(intermediateButton);
+            window.draw(expertButton);
+            window.draw(customButton);
+
+            window.draw(beginnerText);
+            window.draw(intermediateText);
+            window.draw(expertText);
+            window.draw(customText);
+        }
+
+        if(state == GameState::Playing){
+            // Set the view for handling game events
+            window.setView(view);
+    
+            // Controls the camera
+            if(Keyboard::isKeyPressed(Keyboard::Key::W)) view.move({0.f,-MOVESPEED});
+            if(Keyboard::isKeyPressed(Keyboard::Key::A)) view.move({-MOVESPEED,0.f});
+            if(Keyboard::isKeyPressed(Keyboard::Key::S)) view.move({0.f,MOVESPEED});
+            if(Keyboard::isKeyPressed(Keyboard::Key::D)) view.move({MOVESPEED,0.f});
+            
+            if(Keyboard::isKeyPressed(Keyboard::Key::Up)){
+                if (view.getSize().x > MIN_VIEW_WIDTH) view.zoom(ZOOM_IN);
+            }
+    
+            if(Keyboard::isKeyPressed(Keyboard::Key::Down)){
+                if (view.getSize().x < MAX_VIEW_WIDTH) view.zoom(ZOOM_OUT);
+            }
+    
+            int seconds = static_cast<int>(gameClock.getElapsedTime().asSeconds());
+            timerText.setString("Time: " + std::to_string(seconds));
+            minesText.setString("Mines: ");
+            
+            DrawBoard(window, GameBoard, tileTexture);
+            
+            // Set the view for handling UI elements
+            window.setView(window.getDefaultView());
+    
+            // Draw hud elements
+            window.draw(hud);
+            window.draw(timerText);
+            window.draw(difficultyText);
+            window.draw(minesText);
+        }
         window.display();
     }
     return 0;
@@ -278,4 +372,16 @@ void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture&
             window.draw(sprite);
         }
     }
+}
+
+void SetButtonParameters(RectangleShape& button){
+    button.setFillColor(Color(160, 140, 120));
+    button.setOutlineThickness(2.f);
+    button.setOutlineColor(Color::Black);
+}
+
+void StartGame(vector<vector<Tile>>& GameBoard, View& view, int mines, int rows, int cols){
+    GameBoard = SetGameBoard(mines, rows, cols);
+
+    view.setCenter({getBoardSizeX(GameBoard) / 2.f, getBoardSizeY(GameBoard) / 2.f});
 }
