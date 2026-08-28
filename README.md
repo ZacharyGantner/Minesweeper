@@ -11,3 +11,9 @@ To build from the source:
 3. Configure the project to point towards SFML's include and lib folders
 4. Build the project
 5. Copy the required SFML dlls into the same folder as the executable
+
+Controls:
+- Left click to reveal a tile
+- Right click to flag a tile
+- ASWD to pan the view/camera
+- Up/Down arrows to zoom in or out
