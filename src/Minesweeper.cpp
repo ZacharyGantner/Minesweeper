@@ -51,7 +51,8 @@ void Reveal(vector<vector<Tile>>& Board, Position startPos);
 
 void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture);
 void SetButtonParameters(RectangleShape& button);
-void StartGame(vector<vector<Tile>>& GameBoard, View& view, int mines, int rows, int cols);
+void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols);
+void RevealBoard(vector<vector<Tile>>& Board);
 
 float getBoardSizeX(vector<vector<Tile>>& Board);
 float getBoardSizeY(vector<vector<Tile>>& Board);
@@ -117,9 +118,15 @@ int main(){
     Text minesText(font);
     minesText.setPosition({300.f, 5.f});
 
-    // Creates the camera and centers it on the board
+    //Creates the text for the Game Over screen
+    Text gameOverText(font);
+    gameOverText.setString("GAME OVER");
+    gameOverText.setCharacterSize(50);
+    gameOverText.setFillColor(Color::White);
+    gameOverText.setPosition({450.f,130.f});
+
+    // Creates the camera
     View view({0.f, 0.f}, {750.f, 750.f});
-    window.setView(view);
     
     const float MOVESPEED = 5.f;
     const float ZOOM_IN = 0.98f;
@@ -179,6 +186,11 @@ int main(){
                                 gameClock.restart();
                                 firstClick = false;
                             }
+                            if(GameBoard[row][col].isMine){
+                                state = GameState::GameOver;
+                                RevealBoard(GameBoard);
+                            }
+
                         }
                     }
     
@@ -249,6 +261,24 @@ int main(){
             window.draw(hud);
             window.draw(timerText);
             window.draw(minesText);
+        }
+
+        if(state == GameState::GameOver){
+            window.setView(view);
+            view.setCenter({getBoardSizeX(GameBoard) / 2.f, getBoardSizeY(GameBoard) / 2.f});
+
+            // Allows for zoom on the game over screen
+            if(Keyboard::isKeyPressed(Keyboard::Key::Up)){
+                if (view.getSize().x > MIN_VIEW_WIDTH) view.zoom(ZOOM_IN);
+            }
+            
+            if(Keyboard::isKeyPressed(Keyboard::Key::Down)){
+                if (view.getSize().x < MAX_VIEW_WIDTH) view.zoom(ZOOM_OUT);
+            }
+            DrawBoard(window, GameBoard, tileTexture);
+            
+            window.setView(window.getDefaultView());
+            window.draw(gameOverText);
         }
         window.display();
     }
@@ -381,8 +411,16 @@ void SetButtonParameters(RectangleShape& button){
     button.setOutlineColor(Color::Black);
 }
 
-void StartGame(vector<vector<Tile>>& GameBoard, View& view, int mines, int rows, int cols){
-    GameBoard = SetGameBoard(mines, rows, cols);
+void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols){
+    Board = SetGameBoard(mines, rows, cols);
 
-    view.setCenter({getBoardSizeX(GameBoard) / 2.f, getBoardSizeY(GameBoard) / 2.f});
+    view.setCenter({getBoardSizeX(Board) / 2.f, getBoardSizeY(Board) / 2.f});
+}
+
+void RevealBoard(vector<vector<Tile>>& Board){
+    for(int row = 0; row < Board.size(); ++row){
+        for(int col = 0; col < Board[row].size(); ++col){
+            Board[row][col].hidden = false;
+        }
+    }
 }
