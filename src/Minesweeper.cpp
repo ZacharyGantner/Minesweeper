@@ -85,9 +85,9 @@ int main(){
 
     Text title(font);
     title.setString("MINESWEEPER");
-    title.setCharacterSize(50);
+    title.setCharacterSize(100);
     title.setFillColor(Color::White);
-    title.setPosition({410.f, 130.f});
+    title.setPosition({230.f, 100.f});
 
     Text beginnerText(font);
     Text intermediateText(font);
@@ -118,12 +118,21 @@ int main(){
     Text minesText(font);
     minesText.setPosition({300.f, 5.f});
 
-    //Creates the text for the Game Over screen
+    // Creates the text for the Game Over screen
     Text gameOverText(font);
     gameOverText.setString("GAME OVER");
-    gameOverText.setCharacterSize(50);
-    gameOverText.setFillColor(Color::White);
-    gameOverText.setPosition({450.f,130.f});
+    gameOverText.setCharacterSize(100);
+    gameOverText.setFillColor(Color::Red);
+    gameOverText.setPosition({300.f, 30.f});
+
+    // Creates the main menu button on the game over screen
+    RectangleShape backToMenuButton({300.f, 60.f});
+    backToMenuButton.setPosition({450.f, 160.f});
+    SetButtonParameters(backToMenuButton);
+
+    Text backToMenuText(font);
+    backToMenuText.setString("Main Menu");
+    backToMenuText.setPosition({515.f, 173.f});
 
     // Creates the camera
     View view({0.f, 0.f}, {750.f, 750.f});
@@ -134,9 +143,9 @@ int main(){
     const float MIN_VIEW_WIDTH = 400.f;
     const float MAX_VIEW_WIDTH = 3000.f;
     
-    bool firstClick = true;
     int minesRemaining = 0;
-    
+    bool firstClick = true;
+
     Clock gameClock;
     gameClock.reset();
     while(window.isOpen()){
@@ -153,19 +162,22 @@ int main(){
                             StartGame(GameBoard, view, 10, 9, 9);
                             state = GameState::Playing;
                             minesRemaining = 10;
+                            firstClick = true;
                         }
                         else if (intermediateButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 40, 16, 16);
                             state = GameState::Playing;
                             minesRemaining = 40;
+                            firstClick = true;
                         }
                         else if (expertButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 99, 16, 30);
                             state = GameState::Playing;
                             minesRemaining = 99;
+                            firstClick = true;
                         }
                         else if (customButton.getGlobalBounds().contains(mousePos)){
-                            state = GameState::CustomSetup;
+                            //state = GameState::CustomSetup;
                         }
                     }
                 }
@@ -204,6 +216,16 @@ int main(){
                                 GameBoard[row][col].isFlagged = false;
                                 minesRemaining++;
                             }
+                        }
+                    }
+                }
+                else if(state == GameState::GameOver){
+                    window.setView(window.getDefaultView());
+                    gameClock.reset();
+                    if(pressed->button == Mouse::Button::Left){
+                        Vector2f mousePos = window.mapPixelToCoords(pressed->position);
+                        if(backToMenuButton.getGlobalBounds().contains(mousePos)){
+                            state = GameState::MainMenu;
                         }
                     }
                 }
@@ -279,6 +301,8 @@ int main(){
             
             window.setView(window.getDefaultView());
             window.draw(gameOverText);
+            window.draw(backToMenuButton);
+            window.draw(backToMenuText);
         }
         window.display();
     }
