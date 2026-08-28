@@ -129,7 +129,7 @@ int main(){
     victoryText.setString("VICTORY");
     victoryText.setCharacterSize(100);
     victoryText.setFillColor(Color::Cyan);
-    victoryText.setPosition({300.f, 30.f});
+    victoryText.setPosition({380.f, 30.f});
 
     // Creates the main menu button on the game over screen
     RectangleShape backToMenuButton({300.f, 60.f});
@@ -172,6 +172,7 @@ int main(){
                             minesRemaining = 10;
                             remainingSafeTiles = 9 * 9 - 10;
                             firstClick = true;
+                            mineHit = false;
                         }
                         else if (intermediateButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 40, 16, 16);
@@ -179,6 +180,7 @@ int main(){
                             minesRemaining = 40;
                             remainingSafeTiles = 16 * 16 - 40;
                             firstClick = true;
+                            mineHit = false;
                         }
                         else if (expertButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 99, 16, 30);
@@ -186,6 +188,7 @@ int main(){
                             minesRemaining = 99;
                             remainingSafeTiles = 16 * 30 - 99;
                             firstClick = true;
+                            mineHit = false;
                         }
                         else if (customButton.getGlobalBounds().contains(mousePos)){
                             //state = GameState::CustomSetup;
@@ -463,6 +466,7 @@ void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int
 void RevealBoard(vector<vector<Tile>>& Board){
     for(int row = 0; row < Board.size(); ++row){
         for(int col = 0; col < Board[row].size(); ++col){
+            if(Board[row][col].isFlagged && !Board[row][col].isMine) Board[row][col].isFlagged = false;
             Board[row][col].hidden = false;
         }
     }
