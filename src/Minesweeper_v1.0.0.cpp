@@ -128,6 +128,7 @@ int main(){
     const float MAX_VIEW_WIDTH = 3000.f;
     
     bool firstClick = true;
+    int minesRemaining = 0;
     
     Clock gameClock;
     gameClock.reset();
@@ -144,14 +145,17 @@ int main(){
                         if (beginnerButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 10, 9, 9);
                             state = GameState::Playing;
+                            minesRemaining = 10;
                         }
                         else if (intermediateButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 40, 16, 16);
                             state = GameState::Playing;
+                            minesRemaining = 40;
                         }
                         else if (expertButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 99, 16, 30);
                             state = GameState::Playing;
+                            minesRemaining = 99;
                         }
                         else if (customButton.getGlobalBounds().contains(mousePos)){
                             state = GameState::CustomSetup;
@@ -183,8 +187,10 @@ int main(){
                         if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
                             if(!GameBoard[row][col].isFlagged && GameBoard[row][col].hidden){
                                 GameBoard[row][col].isFlagged = true;
+                                minesRemaining--;
                             } else{
                                 GameBoard[row][col].isFlagged = false;
+                                minesRemaining++;
                             }
                         }
                     }
@@ -195,6 +201,7 @@ int main(){
         // Clear the window before drawing anything in the loop
         window.clear(Color(181,148,103));
 
+        // Draw the main menu elements
         if (state == GameState::MainMenu){
             window.setView(window.getDefaultView());
 
@@ -231,7 +238,7 @@ int main(){
     
             int seconds = static_cast<int>(gameClock.getElapsedTime().asSeconds());
             timerText.setString("Time: " + std::to_string(seconds));
-            minesText.setString("Mines: ");
+            minesText.setString("Mines: " + std::to_string(minesRemaining));
             
             DrawBoard(window, GameBoard, tileTexture);
             
