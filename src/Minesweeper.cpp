@@ -51,7 +51,7 @@ void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTi
 
 void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture);
 void SetButtonParameters(RectangleShape& button);
-void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols);
+void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols, bool& mineHit, bool& firstClick);
 void RevealBoard(vector<vector<Tile>>& Board);
 
 float getBoardSizeX(vector<vector<Tile>>& Board);
@@ -167,28 +167,22 @@ int main(){
                         Vector2f mousePos = window.mapPixelToCoords(pressed->position);
 
                         if (beginnerButton.getGlobalBounds().contains(mousePos)){
-                            StartGame(GameBoard, view, 10, 9, 9);
+                            StartGame(GameBoard, view, 10, 9, 9, mineHit, firstClick);
                             state = GameState::Playing;
                             minesRemaining = 10;
                             remainingSafeTiles = 9 * 9 - 10;
-                            firstClick = true;
-                            mineHit = false;
                         }
                         else if (intermediateButton.getGlobalBounds().contains(mousePos)){
-                            StartGame(GameBoard, view, 40, 16, 16);
+                            StartGame(GameBoard, view, 40, 16, 16, mineHit, firstClick);
                             state = GameState::Playing;
                             minesRemaining = 40;
                             remainingSafeTiles = 16 * 16 - 40;
-                            firstClick = true;
-                            mineHit = false;
                         }
                         else if (expertButton.getGlobalBounds().contains(mousePos)){
-                            StartGame(GameBoard, view, 99, 16, 30);
+                            StartGame(GameBoard, view, 99, 16, 30, mineHit, firstClick);
                             state = GameState::Playing;
                             minesRemaining = 99;
                             remainingSafeTiles = 16 * 30 - 99;
-                            firstClick = true;
-                            mineHit = false;
                         }
                         else if (customButton.getGlobalBounds().contains(mousePos)){
                             //state = GameState::CustomSetup;
@@ -457,9 +451,10 @@ void SetButtonParameters(RectangleShape& button){
     button.setOutlineColor(Color::Black);
 }
 
-void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols){
+void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols, bool& mineHit, bool& firstClick){
     Board = SetGameBoard(mines, rows, cols);
-
+    mineHit = false;
+    firstClick = true;
     view.setCenter({getBoardSizeX(Board) / 2.f, getBoardSizeY(Board) / 2.f});
 }
 
