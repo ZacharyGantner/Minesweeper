@@ -86,7 +86,7 @@ int main(){
     title.setString("MINESWEEPER");
     title.setCharacterSize(50);
     title.setFillColor(Color::White);
-    title.setPosition({460.f, 130.f});
+    title.setPosition({410.f, 130.f});
 
     Text beginnerText(font);
     Text intermediateText(font);
@@ -94,7 +94,7 @@ int main(){
     Text customText(font);
 
     beginnerText.setPosition({530.f, 263.f});
-    intermediateText.setPosition({515.f, 343.f});
+    intermediateText.setPosition({500.f, 343.f});
     expertText.setPosition({550.f, 423.f});
     customText.setPosition({550.f, 503.f});
 
@@ -109,18 +109,13 @@ int main(){
     hud.setPosition({0.f, 0.f});
     hud.setFillColor(Color(120, 100, 80));
 
-    // Creates the text for the difficulty selection
-    Text difficultyText(font);
-    difficultyText.setString("Difficulty ");
-    difficultyText.setPosition({500.f, 5.f});
-
     // Creates the text for the timer
     Text timerText(font);
     timerText.setPosition({0.f, 5.f});
 
     // Creates the text for the mine counter
     Text minesText(font);
-    minesText.setPosition({900.f, 5.f});
+    minesText.setPosition({300.f, 5.f});
 
     // Creates the camera and centers it on the board
     View view({0.f, 0.f}, {750.f, 750.f});
@@ -246,7 +241,6 @@ int main(){
             // Draw hud elements
             window.draw(hud);
             window.draw(timerText);
-            window.draw(difficultyText);
             window.draw(minesText);
         }
         window.display();
