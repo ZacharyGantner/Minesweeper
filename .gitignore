@@ -3,3 +3,6 @@ Minesweeper.exe
 
 # SFML development files
 sfml/
+
+# Batch files
+*.bat
