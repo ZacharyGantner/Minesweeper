@@ -292,7 +292,10 @@ int main(){
             window.draw(timerText);
             window.draw(minesText);
 
-            if(remainingSafeTiles == 0) state = GameState::GameOver;
+            if(remainingSafeTiles == 0){
+                RevealBoard(GameBoard);
+                state = GameState::GameOver;
+            }
         }
 
         if(state == GameState::GameOver){
