@@ -6,3 +6,6 @@ sfml/
 
 # Batch files
 *.bat
+
+# highscores text file
+highscores.txt

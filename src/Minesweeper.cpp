@@ -2,6 +2,7 @@
 #include <SFML/Window.hpp>
 #include <SFML/System.hpp>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <random>
 #include <queue>
@@ -44,26 +45,48 @@ enum class GameState
     GameOver
 };
 
+enum class Difficulty
+{
+    Beginner,
+    Intermediate,
+    Expert,
+    Custom
+};
+
 vector<vector<Tile>> SetGameBoard(int numMines, int rows, int cols);
 
 void PrintBoard(const vector<vector<Tile>>& Board);
 void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTiles, bool firstClick);
-
 void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture);
 void SetButtonParameters(RectangleShape& button);
 void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols, bool& mineHit, bool& firstClick);
 void RevealBoard(vector<vector<Tile>>& Board);
 void MoveMines(vector<vector<Tile>>& Board, const int& row, const int& col);
+void CheckScores(vector<vector<Tile>>& Board, int seconds, Difficulty difficulty, int& beginnerHS, int& intermediateHS, int& expertHS);
 
 float getBoardSizeX(vector<vector<Tile>>& Board);
 float getBoardSizeY(vector<vector<Tile>>& Board);
+
 bool Contains(const vector<Position>& arr, const Position& key);
 
 int main(){
     Texture tileTexture("assets/Sprites.png");
     Font font("assets/RubikDistressed-Regular.ttf");
 
+    // Variables and files for keeping track of high scores
+    int beginnerHS;
+    int intermediateHS;
+    int expertHS;
+
+    std::ifstream file("highscores.txt");
+
+    file >> beginnerHS;
+    file >> intermediateHS;
+    file >> expertHS;
+    file.close();
+
     GameState state = GameState::MainMenu;
+    Difficulty difficulty;
     vector<vector<Tile>> GameBoard;
     
     RenderWindow window(VideoMode({1200,1000}), "Minesweeper", Style::Default);
@@ -171,23 +194,27 @@ int main(){
                         if (beginnerButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 10, 9, 9, mineHit, firstClick);
                             state = GameState::Playing;
+                            difficulty = Difficulty::Beginner;
                             minesRemaining = 10;
                             remainingSafeTiles = 9 * 9 - 10;
                         }
                         else if (intermediateButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 40, 16, 16, mineHit, firstClick);
                             state = GameState::Playing;
+                            difficulty = Difficulty::Intermediate;
                             minesRemaining = 40;
                             remainingSafeTiles = 16 * 16 - 40;
                         }
                         else if (expertButton.getGlobalBounds().contains(mousePos)){
                             StartGame(GameBoard, view, 99, 16, 30, mineHit, firstClick);
                             state = GameState::Playing;
+                            difficulty = Difficulty::Expert;
                             minesRemaining = 99;
                             remainingSafeTiles = 16 * 30 - 99;
                         }
                         else if (customButton.getGlobalBounds().contains(mousePos)){
                             //state = GameState::CustomSetup;
+                            //difficulty = Difficulty::Custom;
                         }
                     }
                 }
@@ -299,6 +326,7 @@ int main(){
 
             if(remainingSafeTiles == 0){
                 RevealBoard(GameBoard);
+                CheckScores(GameBoard, seconds, difficulty, beginnerHS, intermediateHS, expertHS);
                 state = GameState::GameOver;
             }
         }
@@ -549,4 +577,28 @@ bool Contains(const vector<Position>& arr, const Position& key){
         if(element.row == key.row && element.col == key.col) return true;
     }
     return false;
+}
+
+void CheckScores(vector<vector<Tile>>& Board, int seconds, Difficulty difficulty, int& beginnerHS, int& intermediateHS, int& expertHS){
+    if(difficulty == Difficulty::Beginner){
+        if(beginnerHS > seconds || beginnerHS == 0){
+            beginnerHS = seconds;
+        }
+    } else if(difficulty == Difficulty::Intermediate){
+        if(intermediateHS > seconds || intermediateHS == 0){
+            intermediateHS = seconds;
+        }
+    } else if(difficulty == Difficulty::Expert){
+        if(expertHS > seconds || expertHS == 0){
+            expertHS = seconds;
+        }
+    }
+
+    std::ofstream file("highscores.txt");
+
+    file << beginnerHS << "\n";
+    file << intermediateHS << "\n";
+    file << expertHS << "\n";
+
+    file.close();
 }
