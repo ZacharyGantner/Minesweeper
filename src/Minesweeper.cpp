@@ -47,15 +47,17 @@ enum class GameState
 vector<vector<Tile>> SetGameBoard(int numMines, int rows, int cols);
 
 void PrintBoard(const vector<vector<Tile>>& Board);
-void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTiles);
+void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTiles, bool firstClick);
 
 void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture);
 void SetButtonParameters(RectangleShape& button);
 void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols, bool& mineHit, bool& firstClick);
 void RevealBoard(vector<vector<Tile>>& Board);
+void MoveMines(vector<vector<Tile>>& Board, const int& row, const int& col);
 
 float getBoardSizeX(vector<vector<Tile>>& Board);
 float getBoardSizeY(vector<vector<Tile>>& Board);
+bool Contains(const vector<Position>& arr, const Position& key);
 
 int main(){
     Texture tileTexture("assets/Sprites.png");
@@ -201,12 +203,12 @@ int main(){
                     // Reveals tiles with left click
                     if(pressed->button == Mouse::Button::Left){
                         if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
-                            Reveal(GameBoard, Position(row, col), remainingSafeTiles);
-                            if(firstClick){
+                            Reveal(GameBoard, Position(row, col), remainingSafeTiles, firstClick);
+                            if(firstClick && !GameBoard[row][col].isFlagged){
                                 gameClock.restart();
                                 firstClick = false;
                             }
-                            if(GameBoard[row][col].isMine && !GameBoard[row][col].isFlagged){
+                            else if(GameBoard[row][col].isMine && !GameBoard[row][col].isFlagged){
                                 mineHit = true;
                                 state = GameState::GameOver;
                                 RevealBoard(GameBoard);
@@ -217,12 +219,15 @@ int main(){
                     // Flags tiles with right click
                     if(pressed->button == Mouse::Button::Right){
                         if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
-                            if(!GameBoard[row][col].isFlagged && GameBoard[row][col].hidden){
-                                GameBoard[row][col].isFlagged = true;
-                                minesRemaining--;
-                            } else{
-                                GameBoard[row][col].isFlagged = false;
-                                minesRemaining++;
+                            if(GameBoard[row][col].hidden){
+                                if(!GameBoard[row][col].isFlagged){
+                                    GameBoard[row][col].isFlagged = true;
+                                    minesRemaining--;
+                                }
+                                else{
+                                    GameBoard[row][col].isFlagged = false;
+                                    minesRemaining++;
+                                }
                             }
                         }
                     }
@@ -346,15 +351,15 @@ vector<vector<Tile>> SetGameBoard(int numMines, int rows, int cols){
             minesPlaced++;
 
             for(int i = -1; i <= 1; ++i){
-                for(int j = -1; j <=1; ++j){
+                for(int j = -1; j <= 1; ++j){
                     int neighborRow = row+i;
                     int neighborCol = col+j;
 
                     if(neighborRow < 0 || neighborCol < 0 || neighborRow >= rows || neighborCol >= cols) continue;
                     
-                    if(GameBoard[neighborRow][neighborCol].isMine == false) {
-                        GameBoard[neighborRow][neighborCol].adjacentMines++;
-                    }
+                    //if(GameBoard[neighborRow][neighborCol].isMine == false) {
+                    //}
+                    GameBoard[neighborRow][neighborCol].adjacentMines++;
                 }
             }
         }
@@ -370,13 +375,17 @@ float getBoardSizeY(vector<vector<Tile>>& Board){
     return Board.size() * TILE_SIZE;
 }
 
-void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTiles){
-    if(Board[startPos.row][startPos.col].isMine) return;
+void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTiles, bool firstClick){
+    if(Board[startPos.row][startPos.col].isMine && !firstClick) return;
     if(!Board[startPos.row][startPos.col].hidden) return;
     if(Board[startPos.row][startPos.col].isFlagged) return;
 
     const int rows = Board.size();
     const int cols = Board[0].size();
+
+    if(firstClick){
+        MoveMines(Board, startPos.row, startPos.col);
+    }
 
     Board[startPos.row][startPos.col].hidden = false;
     remainingSafeTiles--;
@@ -384,6 +393,7 @@ void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTi
     std::queue<Position> revealQueue;
     revealQueue.push(startPos);
 
+    // Reveal the clicked tiles neighbors with zero adjecent mines
     while(!revealQueue.empty()){
         Position current = revealQueue.front();
         revealQueue.pop();
@@ -404,6 +414,70 @@ void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTi
 
                 if(Board[neighborPos.row][neighborPos.col].adjacentMines == 0){
                     revealQueue.push(neighborPos);
+                }
+            }
+        }
+    }
+}
+
+void MoveMines(vector<vector<Tile>>& Board, const int& row, const int& col){
+    const int numRows = Board.size();
+    const int numCols = Board[0].size();
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    std::uniform_int_distribution<int> rowDist(0, numRows - 1);
+    std::uniform_int_distribution<int> colDist(0, numCols - 1);
+
+    int numReplaceMines = 0;
+    vector<Position> exclusionZone;
+
+    for(int i = -2; i <= 2; ++i){
+        for(int j = -2; j <= 2; ++j){
+            int checkRow = row+i;
+            int checkCol = col+j;
+
+            if(checkRow < 0 || checkCol < 0 || checkRow >= numRows || checkCol >= numCols) continue;
+
+            exclusionZone.push_back(Position(checkRow, checkCol));
+
+            if(Board[checkRow][checkCol].isMine){
+                Board[checkRow][checkCol].isMine = false;
+                numReplaceMines++;
+                
+                for(int i = -1; i <= 1; ++i){
+                    for(int j = -1; j <= 1; ++j){
+                        int neighborRow = checkRow+i;
+                        int neighborCol = checkCol+j;
+            
+                        if(neighborRow < 0 || neighborCol < 0 || neighborRow >= numRows || neighborCol >= numCols) continue;
+                        
+                        Board[neighborRow][neighborCol].adjacentMines--;
+                    }
+                }
+            }
+        }
+    }
+
+    while(numReplaceMines > 0){
+        int newRow = rowDist(gen);
+        int newCol = colDist(gen);
+
+        if(Contains(exclusionZone, Position(newRow, newCol))) continue;
+
+        if(!Board[newRow][newCol].isMine){
+            Board[newRow][newCol].isMine = true;
+            numReplaceMines--;
+
+            for(int i = -1; i <= 1; ++i){
+                for(int j = -1; j <= 1; ++j){
+                    int neighborRow = newRow+i;
+                    int neighborCol = newCol+j;
+
+                    if(neighborRow < 0 || neighborCol < 0 || neighborRow >= numRows || neighborCol >= numCols) continue;
+                    
+                    Board[neighborRow][neighborCol].adjacentMines++;
                 }
             }
         }
@@ -468,4 +542,11 @@ void RevealBoard(vector<vector<Tile>>& Board){
             Board[row][col].hidden = false;
         }
     }
+}
+
+bool Contains(const vector<Position>& arr, const Position& key){
+    for(const Position& element : arr){
+        if(element.row == key.row && element.col == key.col) return true;
+    }
+    return false;
 }
