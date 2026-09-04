@@ -97,16 +97,21 @@ int main(){
     RectangleShape intermediateButton({300.f, 60.f});
     RectangleShape expertButton({300.f, 60.f});
     RectangleShape customButton({300.f, 60.f});
+    RectangleShape scoreDisplay({330.f, 400.f});
 
     beginnerButton.setPosition({450.f, 250.f});
     intermediateButton.setPosition({450.f, 330.f});
     expertButton.setPosition({450.f, 410.f});
     customButton.setPosition({450.f, 490.f});
+    scoreDisplay.setPosition({0.f, 600.f});
 
     SetButtonParameters(beginnerButton);
     SetButtonParameters(intermediateButton);
     SetButtonParameters(expertButton);
     SetButtonParameters(customButton);
+
+    // scoreDisplay is not a button but requires the same treatment
+    SetButtonParameters(scoreDisplay);
 
     Text title(font);
     title.setString("MINESWEEPER");
@@ -118,16 +123,30 @@ int main(){
     Text intermediateText(font);
     Text expertText(font);
     Text customText(font);
+    Text highScoreText(font);
+    Text beginnerScoreText(font);
+    Text intermediateScoreText(font);
+    Text expertScoreText(font);
 
     beginnerText.setPosition({530.f, 263.f});
     intermediateText.setPosition({500.f, 343.f});
     expertText.setPosition({550.f, 423.f});
     customText.setPosition({550.f, 503.f});
+    highScoreText.setPosition({30.f, 600.f});
+    beginnerScoreText.setPosition({5.f, 670.f});
+    intermediateScoreText.setPosition({5.f, 710.f});
+    expertScoreText.setPosition({5.f, 750.f});
 
     beginnerText.setString("Beginner");
     intermediateText.setString("Intermediate");
     expertText.setString("Expert");
     customText.setString("Custom");
+    highScoreText.setString("High Scores!");
+    beginnerScoreText.setString("Beginner: " + std::to_string(beginnerHS));
+    intermediateScoreText.setString("Intermediate: " + std::to_string(intermediateHS));
+    expertScoreText.setString("Expert: " + std::to_string(expertHS));
+
+    highScoreText.setCharacterSize(40);
 
     // Creates the hud rectangle
     RectangleShape hud;
@@ -279,17 +298,26 @@ int main(){
         if (state == GameState::MainMenu){
             window.setView(window.getDefaultView());
 
+            beginnerScoreText.setString("Beginner: " + std::to_string(beginnerHS));
+            intermediateScoreText.setString("Intermediate: " + std::to_string(intermediateHS));
+            expertScoreText.setString("Expert: " + std::to_string(expertHS));
+
             window.draw(title);
 
             window.draw(beginnerButton);
             window.draw(intermediateButton);
             window.draw(expertButton);
             window.draw(customButton);
+            window.draw(scoreDisplay);
 
             window.draw(beginnerText);
             window.draw(intermediateText);
             window.draw(expertText);
             window.draw(customText);
+            window.draw(highScoreText);
+            window.draw(beginnerScoreText);
+            window.draw(intermediateScoreText);
+            window.draw(expertScoreText);
         }
 
         if(state == GameState::Playing){
