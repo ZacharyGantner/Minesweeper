@@ -59,7 +59,7 @@ void PrintBoard(const vector<vector<Tile>>& Board);
 void Reveal(vector<vector<Tile>>& Board, Position startPos, int& remainingSafeTiles, bool firstClick);
 void DrawBoard(RenderWindow& window, vector<vector<Tile>>& Board, const Texture& tileTexture);
 void SetButtonParameters(RectangleShape& button);
-void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols, bool& mineHit, bool& firstClick);
+void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols, bool& mineHit, bool& firstClick, Clock& gameClock);
 void RevealBoard(vector<vector<Tile>>& Board);
 void MoveMines(vector<vector<Tile>>& Board, const int& row, const int& col);
 void CheckScores(vector<vector<Tile>>& Board, int seconds, Difficulty difficulty, int& beginnerHS, int& intermediateHS, int& expertHS);
@@ -211,21 +211,21 @@ int main(){
                         Vector2f mousePos = window.mapPixelToCoords(pressed->position);
 
                         if (beginnerButton.getGlobalBounds().contains(mousePos)){
-                            StartGame(GameBoard, view, 10, 9, 9, mineHit, firstClick);
+                            StartGame(GameBoard, view, 10, 9, 9, mineHit, firstClick, gameClock);
                             state = GameState::Playing;
                             difficulty = Difficulty::Beginner;
                             minesRemaining = 10;
                             remainingSafeTiles = 9 * 9 - 10;
                         }
                         else if (intermediateButton.getGlobalBounds().contains(mousePos)){
-                            StartGame(GameBoard, view, 40, 16, 16, mineHit, firstClick);
+                            StartGame(GameBoard, view, 40, 16, 16, mineHit, firstClick, gameClock);
                             state = GameState::Playing;
                             difficulty = Difficulty::Intermediate;
                             minesRemaining = 40;
                             remainingSafeTiles = 16 * 16 - 40;
                         }
                         else if (expertButton.getGlobalBounds().contains(mousePos)){
-                            StartGame(GameBoard, view, 99, 16, 30, mineHit, firstClick);
+                            StartGame(GameBoard, view, 99, 16, 30, mineHit, firstClick, gameClock);
                             state = GameState::Playing;
                             difficulty = Difficulty::Expert;
                             minesRemaining = 99;
@@ -251,7 +251,7 @@ int main(){
                         if (row >= 0 && row < GameBoard.size() && col >= 0 && col < GameBoard[row].size()){
                             Reveal(GameBoard, Position(row, col), remainingSafeTiles, firstClick);
                             if(firstClick && !GameBoard[row][col].isFlagged){
-                                gameClock.restart();
+                                gameClock.start();
                                 firstClick = false;
                             }
                             else if(GameBoard[row][col].isMine && !GameBoard[row][col].isFlagged){
@@ -280,7 +280,7 @@ int main(){
                 }
                 else if(state == GameState::GameOver){
                     window.setView(window.getDefaultView());
-                    gameClock.reset();
+                    gameClock.stop();
                     if(pressed->button == Mouse::Button::Left){
                         Vector2f mousePos = window.mapPixelToCoords(pressed->position);
                         if(backToMenuButton.getGlobalBounds().contains(mousePos)){
@@ -344,6 +344,12 @@ int main(){
             
             DrawBoard(window, GameBoard, tileTexture);
             
+            if(remainingSafeTiles == 0){
+                RevealBoard(GameBoard);
+                CheckScores(GameBoard, seconds, difficulty, beginnerHS, intermediateHS, expertHS);
+                state = GameState::GameOver;
+            }
+
             // Set the view for handling UI elements
             window.setView(window.getDefaultView());
     
@@ -351,12 +357,6 @@ int main(){
             window.draw(hud);
             window.draw(timerText);
             window.draw(minesText);
-
-            if(remainingSafeTiles == 0){
-                RevealBoard(GameBoard);
-                CheckScores(GameBoard, seconds, difficulty, beginnerHS, intermediateHS, expertHS);
-                state = GameState::GameOver;
-            }
         }
 
         if(state == GameState::GameOver){
@@ -378,6 +378,8 @@ int main(){
             if(mineHit) window.draw(gameOverText);
             else window.draw(victoryText);
 
+            window.draw(hud);
+            window.draw(timerText);
             window.draw(backToMenuButton);
             window.draw(backToMenuText);
         }
@@ -584,8 +586,9 @@ void SetButtonParameters(RectangleShape& button){
     button.setOutlineColor(Color::Black);
 }
 
-void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols, bool& mineHit, bool& firstClick){
+void StartGame(vector<vector<Tile>>& Board, View& view, int mines, int rows, int cols, bool& mineHit, bool& firstClick, Clock& gameClock){
     Board = SetGameBoard(mines, rows, cols);
+    gameClock.reset();
     mineHit = false;
     firstClick = true;
     view.setCenter({getBoardSizeX(Board) / 2.f, getBoardSizeY(Board) / 2.f});
