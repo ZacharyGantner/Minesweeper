@@ -1,4 +1,4 @@
-Latest release: https://github.com/user-attachments/files/31621152/MineSweeper-v1.0.0.zip
+Latest release: https://github.com/ZacharyGantner/Minesweeper/releases/tag/Minesweeper-v1.1.0
 
 To play the game:
 1. Download the zip from the release or from the link above
